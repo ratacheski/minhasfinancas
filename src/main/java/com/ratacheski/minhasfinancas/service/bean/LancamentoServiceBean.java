@@ -3,6 +3,7 @@ package com.ratacheski.minhasfinancas.service.bean;
 import com.ratacheski.minhasfinancas.exception.RegraNegocioException;
 import com.ratacheski.minhasfinancas.model.entity.Lancamento;
 import com.ratacheski.minhasfinancas.model.enums.StatusLancamento;
+import com.ratacheski.minhasfinancas.model.enums.TipoLancamento;
 import com.ratacheski.minhasfinancas.model.repository.LancamentoRepository;
 import com.ratacheski.minhasfinancas.service.LancamentoService;
 import org.springframework.data.domain.Example;
@@ -84,7 +85,7 @@ public class LancamentoServiceBean implements LancamentoService {
             throw new RegraNegocioException("Informe um válido positivo.");
         }
 
-        if (lancamento.getTipoLancamento() == null){
+        if (lancamento.getTipoLancamento() == null) {
             throw new RegraNegocioException("Informe um tipo de lançamento.");
         }
     }
@@ -92,5 +93,19 @@ public class LancamentoServiceBean implements LancamentoService {
     @Override
     public Optional<Lancamento> obterPorId(Long idLancamento) {
         return lancamentoRepository.findById(idLancamento);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BigDecimal obterSaldoPorUsuario(Long idUsuario) {
+        BigDecimal receitas = lancamentoRepository.obterSaldoPorTipoLancamentoEUsuario(idUsuario, TipoLancamento.RECEITA);
+        BigDecimal despesas = lancamentoRepository.obterSaldoPorTipoLancamentoEUsuario(idUsuario, TipoLancamento.DESPESA);
+
+        if (receitas == null)
+            receitas = BigDecimal.ZERO;
+        if (despesas == null)
+            despesas = BigDecimal.ZERO;
+
+        return receitas.subtract(despesas);
     }
 }
