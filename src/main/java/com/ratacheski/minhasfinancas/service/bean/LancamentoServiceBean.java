@@ -82,7 +82,7 @@ public class LancamentoServiceBean implements LancamentoService {
         }
 
         if (lancamento.getValor() == null || lancamento.getValor().compareTo(BigDecimal.ZERO) < 1) {
-            throw new RegraNegocioException("Informe um válido positivo.");
+            throw new RegraNegocioException("Informe um valor válido positivo.");
         }
 
         if (lancamento.getTipoLancamento() == null) {
