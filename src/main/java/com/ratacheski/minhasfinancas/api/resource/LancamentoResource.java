@@ -79,16 +79,29 @@ public class LancamentoResource {
         }).orElseGet(() -> new ResponseEntity("Lançamento não encontrado na base de dados.", HttpStatus.BAD_REQUEST));
     }
 
+    @GetMapping("{id}")
+    public ResponseEntity obterLancamento(@PathVariable("id") Long idLancamento) {
+        return lancamentoService.obterPorId(idLancamento)
+                .map(lancamento -> new ResponseEntity(converteLancamentoParaLancamentoDTO(lancamento), HttpStatus.OK))
+                .orElseGet( () -> new ResponseEntity(HttpStatus.NOT_FOUND));
+    }
+
     @GetMapping
     public ResponseEntity buscarLancamento(
             @RequestParam(value = "descricao", required = false) String descricao,
             @RequestParam(value = "mes", required = false) Integer mes,
             @RequestParam(value = "ano", required = false) Integer ano,
+            @RequestParam(value = "tipo", required = false) String tipoLancamento,
+            @RequestParam(value = "status", required = false) String statusLancamento,
             @RequestParam("usuario") Long idUsuario) {
         Lancamento lancamentoFiltro = new Lancamento();
         lancamentoFiltro.setDescricao(descricao);
         lancamentoFiltro.setMes(mes);
         lancamentoFiltro.setAno(ano);
+        if (tipoLancamento != null)
+            lancamentoFiltro.setTipoLancamento(TipoLancamento.valueOf(tipoLancamento));
+        if (statusLancamento != null)
+            lancamentoFiltro.setStatusLancamento(StatusLancamento.valueOf(statusLancamento));
         Optional<Usuario> retorno = usuarioService.obterPorId(idUsuario);
         if (retorno.isEmpty()) {
             return ResponseEntity.badRequest().body("Não foi possível realizar a consulta. Usuário não encontrado para o id informado.");
@@ -98,6 +111,19 @@ public class LancamentoResource {
 
         List<Lancamento> lancamentos = lancamentoService.buscarLancamentos(lancamentoFiltro);
         return ResponseEntity.ok(lancamentos);
+    }
+
+    private LancamentoDTO converteLancamentoParaLancamentoDTO(Lancamento lancamento){
+        return LancamentoDTO.builder()
+                .id(lancamento.getId())
+                .descricao(lancamento.getDescricao())
+                .valor(lancamento.getValor())
+                .ano(lancamento.getAno())
+                .mes(lancamento.getMes())
+                .tipo(lancamento.getTipoLancamento().name())
+                .status(lancamento.getStatusLancamento().name())
+                .usuario(lancamento.getUsuario().getId())
+                .build();
     }
 
     private Lancamento converteLancamentoDTOParaLancamento(LancamentoDTO dto) {
